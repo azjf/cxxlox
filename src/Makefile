@@ -1,6 +1,6 @@
 LOCAL_PATH := $(shell pwd)
 
-_OBJS = main.o chunk.o debug.o
+_OBJS = main.o chunk.o debug.o vm.o
 OBJS = $(patsubst %,$(OUT_DIR)/%,$(_OBJS))
 
 $(OUT_DIR)/cxxlox: $(OBJS)
