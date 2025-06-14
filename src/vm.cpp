@@ -1,12 +1,14 @@
 #include "vm.h"
 #include "chunk.h"
+#include "compiler.h"
 #include "debug.h"
 
-InterpretResult VM::interpret(const Chunk &chunk)
+InterpretResult VM::interpret(const std::string &source)
 {
-    this->chunk = &chunk;
-    this->ip = this->chunk->code.begin();
-    return run();
+    Compiler compiler;
+    compiler.compile(source);
+    //return run();
+    return INTERPRET_OK;
 }
 
 InterpretResult VM::run()

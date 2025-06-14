@@ -18,7 +18,7 @@ enum InterpretResult
 class VM
 {
 public:
-    InterpretResult interpret(const Chunk &chunk);
+    InterpretResult interpret(const std::string &source);
 
     void resetStack() { stackTop = stack; }
     void push(Value value) { *stackTop++ = value; }
