@@ -10,7 +10,6 @@
 #include "vm.h"
 
 static VM vm;
-static Chunk chunk;
 
 static void repl()
 {
@@ -47,7 +46,7 @@ static std::string readFile(const char *path)
     try {
         buffer.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
         file.read(&buffer[0], fileSize);
-    } catch (std:: exception &e) {
+    } catch (std::exception &e) {
         fprintf(stderr, "Could not open file \"%s\".\n", path);
         exit(74);
     }

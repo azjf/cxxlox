@@ -30,7 +30,7 @@ void Disassembler::disassembleChunk(const Chunk &chunk, const char *name)
 
 int Disassembler::disassembleInstruction(const Chunk &chunk, int offset)
 {
-    printf("%04d ", offset);
+    printf("%04d", offset);
     if (offset > 0 && chunk.lines[offset] == chunk.lines[offset - 1]) {
         printf("   | ");
     } else {

@@ -62,6 +62,8 @@ struct Token
     int length;
     int line;
 
+    Token() = default;
+
     Token(TokenType type, const char *start, int length, int line) : type(type), start(start), length(length), line(line) {}
 };
 

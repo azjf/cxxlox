@@ -5,10 +5,15 @@
 
 InterpretResult VM::interpret(const std::string &source)
 {
+    Chunk chunk;
     Compiler compiler;
-    compiler.compile(source);
-    //return run();
-    return INTERPRET_OK;
+    if (!compiler.compile(source, chunk)) { return INTERPRET_COMPILE_ERROR; }
+
+    this->chunk = &chunk;
+    ip = this->chunk->code.cbegin();
+
+    InterpretResult result = run();
+    return result;
 }
 
 InterpretResult VM::run()
@@ -24,7 +29,7 @@ InterpretResult VM::run()
 
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
-        printf("           ");
+        printf("          ");
         for (const Value *slot = stack; slot != stackTop; slot++) {
             printf("[ ");
             printValue(*slot);
