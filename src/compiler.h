@@ -6,6 +6,7 @@
 #include <type_traits>
 
 #include "scanner.h"
+#include "value.h"
 #include "vm.h"
 
 struct Parser
@@ -60,7 +61,7 @@ public:
     void number()
     {
         double value = strtod(parser.previous.start, NULL);
-        emitConstant(value);
+        emitConstant(NUMBER_VAL(value));
     }
 
     void grouping()
@@ -72,6 +73,8 @@ public:
     void unary();
 
     void binary();
+
+    void literal();
 
     void errorAtCurrent(const char *message) { errorAt(parser.current, message); }
 

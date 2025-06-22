@@ -11,5 +11,6 @@ default:
 	@mkdir -p $(OUT_DIR)
 	$(MAKE) -C src
 
+.PHONY: clean
 clean:
 	$(MAKE) -C src clean

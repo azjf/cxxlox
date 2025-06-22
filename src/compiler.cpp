@@ -1,5 +1,6 @@
 #include <cstdint>
 
+#include "chunk.h"
 #include "compiler.h"
 #include "scanner.h"
 
@@ -75,6 +76,9 @@ void Compiler::unary()
     TokenType operatorType = parser.previous.type;
     parsePrecedence(PREC_UNARY);
     switch (operatorType) {
+    case TOKEN_BANG:
+        emitByte(OP_NOT);
+        break;
     case TOKEN_MINUS:
         emitByte(OP_NEGATE);
         break;
@@ -95,31 +99,31 @@ ParseRule rules[] = {
     [TOKEN_SEMICOLON] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_SLASH] = {nullptr, &Compiler::binary, PREC_FACTOR},
     [TOKEN_STAR] = {nullptr, &Compiler::binary, PREC_FACTOR},
-    [TOKEN_BANG] = {nullptr, nullptr, PREC_NONE},
-    [TOKEN_BANG_EQUAL] = {nullptr, nullptr, PREC_NONE},
+    [TOKEN_BANG] = {&Compiler::unary, nullptr, PREC_NONE},
+    [TOKEN_BANG_EQUAL] = {nullptr, &Compiler::binary, PREC_EQUALITY},
     [TOKEN_EQUAL] = {nullptr, nullptr, PREC_NONE},
-    [TOKEN_EQUAL_EQUAL] = {nullptr, nullptr, PREC_NONE},
-    [TOKEN_GREATER] = {nullptr, nullptr, PREC_NONE},
-    [TOKEN_GREATER_EQUAL] = {nullptr, nullptr, PREC_NONE},
-    [TOKEN_LESS] = {nullptr, nullptr, PREC_NONE},
-    [TOKEN_LESS_EQUAL] = {nullptr, nullptr, PREC_NONE},
+    [TOKEN_EQUAL_EQUAL] = {nullptr, &Compiler::binary, PREC_EQUALITY},
+    [TOKEN_GREATER] = {nullptr, &Compiler::binary, PREC_COMPARISON},
+    [TOKEN_GREATER_EQUAL] = {nullptr, &Compiler::binary, PREC_COMPARISON},
+    [TOKEN_LESS] = {nullptr, &Compiler::binary, PREC_COMPARISON},
+    [TOKEN_LESS_EQUAL] = {nullptr, &Compiler::binary, PREC_COMPARISON},
     [TOKEN_IDENTIFIER] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_STRING] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_NUMBER] = {&Compiler::number, nullptr, PREC_NONE},
     [TOKEN_AND] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_CLASS] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_ELSE] = {nullptr, nullptr, PREC_NONE},
-    [TOKEN_FALSE] = {nullptr, nullptr, PREC_NONE},
+    [TOKEN_FALSE] = {&Compiler::literal, nullptr, PREC_NONE},
     [TOKEN_FOR] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_FUN] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_IF] = {nullptr, nullptr, PREC_NONE},
-    [TOKEN_NIL] = {nullptr, nullptr, PREC_NONE},
+    [TOKEN_NIL] = {&Compiler::literal, nullptr, PREC_NONE},
     [TOKEN_OR] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_PRINT] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_RETURN] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_SUPER] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_THIS] = {nullptr, nullptr, PREC_NONE},
-    [TOKEN_TRUE] = {nullptr, nullptr, PREC_NONE},
+    [TOKEN_TRUE] = {&Compiler::literal, nullptr, PREC_NONE},
     [TOKEN_VAR] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_WHILE] = {nullptr, nullptr, PREC_NONE},
     [TOKEN_ERROR] = {nullptr, nullptr, PREC_NONE},
@@ -135,6 +139,24 @@ void Compiler::binary()
     parsePrecedence(static_cast<Precedence>(rule.precedence + 1));
 
     switch (operatorType) {
+    case TOKEN_BANG_EQUAL:
+        emitBytes(OP_EQUAL, OP_NOT);
+        break;
+    case TOKEN_EQUAL_EQUAL:
+        emitByte(OP_EQUAL);
+        break;
+    case TOKEN_GREATER:
+        emitByte(OP_GREATER);
+        break;
+    case TOKEN_GREATER_EQUAL:
+        emitBytes(OP_LESS, OP_NOT);
+        break;
+    case TOKEN_LESS:
+        emitByte(OP_LESS);
+        break;
+    case TOKEN_LESS_EQUAL:
+        emitBytes(OP_GREATER, OP_NOT);
+        break;
     case TOKEN_PLUS:
         emitByte(OP_ADD);
         break;
@@ -175,4 +197,22 @@ void Compiler::endCompiler()
 #ifdef DEBUG_PRINT_CODE
     if (!parser.hadError) { disassembleChunk(*currentChunk(), "code"); }
 #endif
+}
+
+
+void Compiler::literal()
+{
+    switch (parser.previous.type) {
+    case TOKEN_FALSE:
+        emitByte(OP_FALSE);
+        break;
+    case TOKEN_NIL:
+        emitByte(OP_NIL);
+        break;
+    case TOKEN_TRUE:
+        emitByte(OP_TRUE);
+        break;
+    default:
+        return;
+    }
 }

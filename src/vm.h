@@ -23,6 +23,7 @@ public:
     void resetStack() { stackTop = stack; }
     void push(Value value) { *stackTop++ = value; }
     Value pop() { return *--stackTop; }
+    Value peek(int distance) { return stackTop[-1 - distance]; }
 
 private:
     const Chunk *chunk;
@@ -33,5 +34,7 @@ private:
     Value *stackTop = stack;
 
     InterpretResult run();
+
+    void runtimeError(const char *format, ...);
 };
 #endif

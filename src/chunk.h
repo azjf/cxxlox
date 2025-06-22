@@ -8,13 +8,20 @@
 
 enum OpCode
 {
-    OP_CONSTANT,
     OP_ADD,
-    OP_SUBTRACT,
-    OP_MULTIPLY,
+    OP_CONSTANT,
     OP_DIVIDE,
+    OP_EQUAL,
+    OP_FALSE,
+    OP_GREATER,
+    OP_LESS,
+    OP_MULTIPLY,
+    OP_NIL,
+    OP_NOT,
     OP_NEGATE,
     OP_RETURN,
+    OP_SUBTRACT,
+    OP_TRUE,
 };
 
 class Chunk
