@@ -9,7 +9,7 @@
 #include "debug.h"
 #include "vm.h"
 
-static VM vm;
+VM vm;
 
 static void repl()
 {

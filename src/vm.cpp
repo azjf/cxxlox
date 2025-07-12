@@ -4,6 +4,7 @@
 #include "chunk.h"
 #include "compiler.h"
 #include "debug.h"
+#include "object.h"
 #include "value.h"
 #include "vm.h"
 
@@ -55,9 +56,19 @@ InterpretResult VM::run()
             push(constant);
             break;
         }
-        case OP_ADD:
-            BINARY_OP(NUMBER_VAL, +);
+        case OP_ADD: {
+            if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                concatenate();
+            } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+                double b = AS_NUMBER(pop());
+                double a = AS_NUMBER(pop());
+                push(NUMBER_VAL(a + b));
+            } else {
+                runtimeError("Operand must be two numbers or two strings.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
             break;
+        }
         case OP_DIVIDE:
             BINARY_OP(NUMBER_VAL, /);
             break;
@@ -122,4 +133,27 @@ void VM::runtimeError(const char *format, ...)
     fprintf(stderr, "[line %d] in script\n", line);
 
     resetStack();
+}
+
+void VM::concatenate()
+{
+    ObjString *b = AS_STRING(pop());
+    ObjString *a = AS_STRING(pop());
+    int length = a->length + b->length;
+    char *chars = ALLOCATE(char, length + 1);
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length, b->chars, b->length);
+    chars[length] = '\0';
+    ObjString *result = takeString(chars, length);
+    push(OBJ_VAL(result));
+}
+
+void VM::freeObjects()
+{
+    Obj *object = objects;
+    while (object != NULL) {
+        Obj *next = object->getNext();
+        delete object;
+        object = next;
+    }
 }

@@ -64,6 +64,8 @@ public:
         emitConstant(NUMBER_VAL(value));
     }
 
+    void string() { emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2))); }
+
     void grouping()
     {
         expression();

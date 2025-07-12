@@ -5,6 +5,8 @@
 #include <stack>
 
 #include "chunk.h"
+#include "memory.h"
+#include "object.h"
 
 constexpr unsigned STACK_MAX = 256;
 
@@ -17,7 +19,12 @@ enum InterpretResult
 
 class VM
 {
+    friend class Obj;
+    friend void freeObjects();
+
 public:
+    ~VM() { freeObjects(); }
+
     InterpretResult interpret(const std::string &source);
 
     void resetStack() { stackTop = stack; }
@@ -28,6 +35,7 @@ public:
 private:
     const Chunk *chunk;
     std::vector<uint8_t>::const_iterator ip;
+    Obj *objects = nullptr;
 
     // std::stack can not be used here, because we need to iterate through it later
     Value stack[STACK_MAX];
@@ -36,5 +44,9 @@ private:
     InterpretResult run();
 
     void runtimeError(const char *format, ...);
+
+    void concatenate();
+
+    void freeObjects();
 };
 #endif
