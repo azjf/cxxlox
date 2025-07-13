@@ -7,6 +7,7 @@
 #include "chunk.h"
 #include "memory.h"
 #include "object.h"
+#include "table.h"
 
 constexpr unsigned STACK_MAX = 256;
 
@@ -20,7 +21,9 @@ enum InterpretResult
 class VM
 {
     friend class Obj;
-    friend void freeObjects();
+    friend class ObjString;
+    friend ObjString *copyString(const char *chars, int length);
+    friend ObjString *takeString(char *chars, int length);
 
 public:
     ~VM() { freeObjects(); }
@@ -35,6 +38,7 @@ public:
 private:
     const Chunk *chunk;
     std::vector<uint8_t>::const_iterator ip;
+    Table strings;
     Obj *objects = nullptr;
 
     // std::stack can not be used here, because we need to iterate through it later
