@@ -38,6 +38,7 @@ public:
 private:
     const Chunk *chunk;
     std::vector<uint8_t>::const_iterator ip;
+    Table globals;
     Table strings;
     Obj *objects = nullptr;
 

@@ -17,7 +17,7 @@ InterpretResult VM::interpret(const std::string &source)
     if (!compiler.compile(source, chunk)) { return INTERPRET_COMPILE_ERROR; }
 
     this->chunk = &chunk;
-    ip = this->chunk->code.cbegin();
+    ip = chunk.code.cbegin();
 
     InterpretResult result = run();
     return result;
@@ -27,6 +27,7 @@ InterpretResult VM::run()
 {
 #define READ_BYTE() (*ip++)
 #define READ_CONSTANT() (chunk->constants.values[READ_BYTE()])
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op)                          \
     do {                                                  \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -51,11 +52,6 @@ InterpretResult VM::run()
 #endif
         uint8_t instruction;
         switch (instruction = READ_BYTE()) {
-        case OP_CONSTANT: {
-            Value constant = READ_CONSTANT();
-            push(constant);
-            break;
-        }
         case OP_ADD: {
             if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
                 concatenate();
@@ -69,6 +65,17 @@ InterpretResult VM::run()
             }
             break;
         }
+        case OP_CONSTANT: {
+            Value constant = READ_CONSTANT();
+            push(constant);
+            break;
+        }
+        case OP_DEFINE_GLOBAL: {
+            ObjString *name = READ_STRING();
+            globals.set(name, peek(0));
+            pop();
+            break;
+        }
         case OP_DIVIDE:
             BINARY_OP(NUMBER_VAL, /);
             break;
@@ -76,6 +83,16 @@ InterpretResult VM::run()
             Value b = pop();
             Value a = pop();
             push(BOOL_VAL(valuesEqual(a, b)));
+            break;
+        }
+        case OP_GET_GLOBAL: {
+            ObjString *name = READ_STRING();
+            Value value;
+            if (!globals.get(name, &value)) {
+                runtimeError("Undefined variable '%s'.", name->getChars());
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            push(value);
             break;
         }
         case OP_GREATER:
@@ -103,10 +120,25 @@ InterpretResult VM::run()
         case OP_NOT:
             push(BOOL_VAL(isFalsey(pop())));
             break;
-        case OP_RETURN: {
+        case OP_PRINT: {
             printValue(pop());
             printf("\n");
+            break;
+        }
+        case OP_POP:
+            pop();
+            break;
+        case OP_RETURN: {
             return INTERPRET_OK;
+        case OP_SET_GLOBAL: {
+            ObjString *name = READ_STRING();
+            if (globals.set(name, peek(0))) {
+                globals.delete_(name);
+                runtimeError("Undefined varible: '%s'", name->getChars());
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            break;
+        }
         case OP_SUBTRACT:
             BINARY_OP(NUMBER_VAL, -);
             break;
@@ -118,6 +150,7 @@ InterpretResult VM::run()
     }
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef READ_STRING
 }
 
 void VM::runtimeError(const char *format, ...)

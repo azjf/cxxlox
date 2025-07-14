@@ -33,7 +33,7 @@ enum Precedence
 };
 
 class Compiler;
-using ParseFn = void (Compiler::*)();
+using ParseFn = void (Compiler::*)(bool canAssign);
 
 struct ParseRule
 {
@@ -49,40 +49,59 @@ class Compiler
 public:
     bool compile(const std::string &source, Chunk &chunk);
 
-public:
+private:
     Parser parser;
     Chunk *compileChunk;
     std::unique_ptr<Scanner> scanner;
+    static ParseRule rules[];
 
-    void advance();
+    static ParseRule &getRule(TokenType type) { return rules[type]; }
+
+    void synchronize();
+
+    void declaration();
+
+    void varDeclaration();
+
+    void statement();
+
+    void printStatement();
+
+    void expressionStatement();
 
     void expression() { parsePrecedence(PREC_ASSIGNMENT); }
 
-    void number()
+    void number(bool canAssign)
     {
         double value = strtod(parser.previous.start, NULL);
         emitConstant(NUMBER_VAL(value));
     }
 
-    void string() { emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2))); }
+    void string(bool canAssign) { emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2))); }
 
-    void grouping()
+    void grouping(bool canAssign)
     {
         expression();
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
     }
 
-    void unary();
+    void unary(bool canAssign);
 
-    void binary();
+    void binary(bool canAssign);
 
-    void literal();
+    void literal(bool canAssign);
 
     void errorAtCurrent(const char *message) { errorAt(parser.current, message); }
 
     void error(const char *message) { errorAt(parser.previous, message); }
 
     void errorAt(const Token &token, const char *message);
+
+    void advance();
+
+    bool match(TokenType type);
+
+    bool check(TokenType type) { return parser.current.type == type; }
 
     void consume(TokenType type, const char *message);
 
@@ -105,6 +124,19 @@ public:
     uint8_t makeConstant(Value value);
 
     void parsePrecedence(Precedence precedence);
-};
 
+    uint8_t identifierConstant(Token &name) { return makeConstant(OBJ_VAL(copyString(name.start, name.length))); }
+
+    uint8_t parseVariable(const char *errorMessage)
+    {
+        consume(TOKEN_IDENTIFIER, errorMessage);
+        return identifierConstant(parser.previous);
+    }
+
+    void defineVariable(uint8_t global) { emitBytes(OP_DEFINE_GLOBAL, global); }
+
+    void variable(bool canAssign) { namedVariable(parser.previous, canAssign); }
+
+    void namedVariable(Token name, bool canAssign);
+};
 #endif

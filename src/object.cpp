@@ -58,7 +58,7 @@ ObjString *ObjString::concatenate(const ObjString &rhs)
 {
     int length = this->length + rhs.length;
     char *chars = ALLOCATE(char, length + 1);
-    memcpy(chars, this->chars, rhs.length);
+    memcpy(chars, this->chars, this->length);
     memcpy(chars + this->length, rhs.chars, rhs.length);
     chars[length] = '\0';
     return takeString(chars, length);
